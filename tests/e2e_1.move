@@ -63,7 +63,8 @@ module coin_creator::e2e_1 {
         assert!(coin::balance<LIQCoin>(signer::address_of(&bob_acc)) == 50, 1);
 
         // burn some coins
-        coin_creator::liq::burn(&creator_acc, 50);
+        let burned = coin_creator::liq::burn(&creator_acc, 50);
+        assert!(burned == 50, 1);
 
         // check supply and balances
         assert!(option::extract(&mut coin::supply<LIQCoin>()) == 100, 1);
