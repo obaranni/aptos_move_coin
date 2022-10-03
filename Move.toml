@@ -1,0 +1,11 @@
+[package]
+name = 'LIQCoin'
+version = '1.0.0'
+
+[addresses]
+coin_creator="0xa6351dc37dca26c0a4fb4ca0b743371c8c55b67834136e54ea29e50a4591e09e"
+
+[dependencies.AptosFramework]
+git = 'https://github.com/aptos-labs/aptos-core.git'
+rev = 'main'
+subdir = 'aptos-move/framework/aptos-framework'
