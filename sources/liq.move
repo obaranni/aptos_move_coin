@@ -1,15 +1,12 @@
 
 module coin_creator::liq {
+    use std::signer;
     use std::string;
 
-    use aptos_framework::coin;
-    use aptos_framework::coin::{BurnCapability, MintCapability, Coin};
-    use std::signer;
-    // use aptos_framework::coin::CoinInfo;
-    // use aptos_std::debug;
-    // use aptos_std::type_info::account_address;
-    // use aptos_framework::account;
-    // use std::signer;
+    use aptos_framework::coin::{Self, BurnCapability, MintCapability, Coin};
+
+    // coin does not exist
+    const ENO_COIN: u64 = 100;
 
     struct LIQCoin {}
 
@@ -35,14 +32,21 @@ module coin_creator::liq {
         });
     }
 
-    entry fun mint(owner: &signer, amount: u64) acquires LIQCoinCapabilities {
-        assert!(exists<LIQCoinCapabilities>(signer::address_of(owner)), 1);
+    public fun mint(owner: &signer, amount: u64): Coin<LIQCoin> acquires LIQCoinCapabilities {
+        assert!(exists<LIQCoinCapabilities>(signer::address_of(owner)), ENO_COIN);
 
         let cap = borrow_global<LIQCoinCapabilities>(signer::address_of(owner));
-        let coins = coin::mint(amount, &cap.mint_cap);
 
-        coin::deposit(signer::address_of(owner), coins);
+        coin::mint(amount, &cap.mint_cap)
     }
 
-    public fun burn() {}
+    public fun burn(owner: &signer, amount: u64): u64 acquires  LIQCoinCapabilities {
+        assert!(exists<LIQCoinCapabilities>(signer::address_of(owner)), ENO_COIN);
+
+        let cap = borrow_global<LIQCoinCapabilities>(signer::address_of(owner));
+        let coin = coin::withdraw<LIQCoin>(owner, amount);
+
+        coin::burn<LIQCoin>(coin, &cap.burn_cap);
+        amount
+    }
 }
