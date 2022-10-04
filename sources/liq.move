@@ -1,4 +1,3 @@
-
 module coin_creator::liq {
     use std::signer;
     use std::string;
@@ -6,7 +5,7 @@ module coin_creator::liq {
     use aptos_framework::coin::{Self, BurnCapability, MintCapability, Coin};
 
     // coin does not exist
-    const ENO_COIN: u64 = 100;
+    const ERR_NO_COIN: u64 = 100;
 
     struct LIQCoin {}
 
@@ -16,7 +15,7 @@ module coin_creator::liq {
     }
 
     public fun initialize(sender: &signer) {
-        let (burn_cap, freeze_cap, mint_cap) =  coin::initialize<LIQCoin>(
+        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<LIQCoin>(
             sender,
             string::utf8(b"LIQCoin"),
             string::utf8(b"LIQ"),
@@ -25,7 +24,6 @@ module coin_creator::liq {
         );
         coin::destroy_freeze_cap(freeze_cap);
 
-        coin::register<LIQCoin>(sender);
         move_to(sender, LIQCoinCapabilities {
             burn_cap,
             mint_cap,
@@ -33,20 +31,22 @@ module coin_creator::liq {
     }
 
     public fun mint(owner: &signer, amount: u64): Coin<LIQCoin> acquires LIQCoinCapabilities {
-        assert!(exists<LIQCoinCapabilities>(signer::address_of(owner)), ENO_COIN);
+        let owner_address = signer::address_of(owner);
+        assert!(exists<LIQCoinCapabilities>(owner_address), ERR_NO_COIN);
 
-        let cap = borrow_global<LIQCoinCapabilities>(signer::address_of(owner));
+        let cap = borrow_global<LIQCoinCapabilities>(owner_address);
 
         coin::mint(amount, &cap.mint_cap)
     }
 
-    public fun burn(owner: &signer, amount: u64): u64 acquires  LIQCoinCapabilities {
-        assert!(exists<LIQCoinCapabilities>(signer::address_of(owner)), ENO_COIN);
+    public fun burn(owner: &signer, coins: Coin<LIQCoin>): u64 acquires LIQCoinCapabilities {
+        let owner_address = signer::address_of(owner);
+        assert!(exists<LIQCoinCapabilities>(owner_address), ERR_NO_COIN);
 
-        let cap = borrow_global<LIQCoinCapabilities>(signer::address_of(owner));
-        let coin = coin::withdraw<LIQCoin>(owner, amount);
+        let amount = coin::value<LIQCoin>(&coins);
+        let cap = borrow_global<LIQCoinCapabilities>(owner_address);
 
-        coin::burn<LIQCoin>(coin, &cap.burn_cap);
+        coin::burn<LIQCoin>(coins, &cap.burn_cap);
         amount
     }
 }
